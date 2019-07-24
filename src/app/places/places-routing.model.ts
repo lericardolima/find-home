@@ -29,12 +29,12 @@ const routes: Routes = [
                         loadChildren: './offers/offers.module#OffersPageModule'
                     },
                     {
-                        path: ':new',
-                        loadChildren: './offers/new-offer/new-offers.module#NewOfferPageModule'
+                        path: '/new',
+                        loadChildren: './offers/new-offer/new-offer.module#NewOfferPageModule'
                     },
                     {
                         path: 'edit/:offerId',
-                        loadChildren: './offers/edir-offer/edit-offers.module#EditOfferPageModule'
+                        loadChildren: './offers/edit-offer/edit-offer.module#EditOfferPageModule'
                     },
                     {
                         path: ':placeId',
