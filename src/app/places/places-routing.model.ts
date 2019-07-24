@@ -1,7 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { PlacesPage } from './places.page';
-import { DiscoverPage } from './discover/discover.page';
 
 const routes: Routes = [
     {
@@ -25,12 +24,12 @@ const routes: Routes = [
                 path: 'offers',
                 children: [
                     {
-                        path: '',
-                        loadChildren: './offers/offers.module#OffersPageModule'
+                        path: 'new',
+                        loadChildren: './offers/new-offer/new-offer.module#NewOfferPageModule'
                     },
                     {
-                        path: '/new',
-                        loadChildren: './offers/new-offer/new-offer.module#NewOfferPageModule'
+                        path: '',
+                        loadChildren: './offers/offers.module#OffersPageModule'
                     },
                     {
                         path: 'edit/:offerId',

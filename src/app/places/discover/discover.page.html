@@ -1,5 +1,8 @@
 <ion-header>
   <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-menu-button menu="ml"></ion-menu-button>
+    </ion-buttons>
     <ion-title>Discover new places</ion-title>
   </ion-toolbar>
 </ion-header>
@@ -10,20 +13,15 @@
       <ion-col size="12" size-sm="8" offset-sm="2" text-center>
         <ion-card>
           <ion-card-header>
-            <ion-card-title>
-              {{ _places[0]?.title }}
-            </ion-card-title>
-            <ion-card-subtitle>
-              {{ _places[0]?.price | currency }} per night
-            </ion-card-subtitle>
+            <ion-card-title>{{ _places[0]?.title }}</ion-card-title>
+            <ion-card-subtitle>{{ _places[0]?.price | currency }} per night</ion-card-subtitle>
           </ion-card-header>
           <ion-img [src]="_places[0]?.imageUrl"></ion-img>
           <ion-card-content>
             <p>{{ _places[0]?.description }}</p>
           </ion-card-content>
           <div text-right>
-            <ion-button slot="start" color="primary" fill="clear" routerDirection="forward"
-              [routerLink]="['/', 'places', 'tabs', 'discover', _places[0].id]">
+            <ion-button slot="start" color="primary" fill="clear" routerDirection="forward" [routerLink]="['/', 'places', 'tabs', 'discover', _places[0].id]">
               See details
             </ion-button>
           </div>
@@ -33,8 +31,8 @@
     <ion-row>
       <ion-col size="12" size-sm="8" offset-sm="2" text-center>
         <ion-list>
-          <ion-item *ngFor="let place of _places.slice(1)" routerDirection="forward"
-          [routerLink]="['/', 'places', 'tabs', 'discover', place.id]" detail>
+          <ion-item *ngFor="let place of _places.slice(1)" routerDirection="forward" [routerLink]="['/', 'places', 'tabs', 'discover', place.id]"
+            detail>
             <ion-thumbnail slot="start">
               <ion-img [src]="place.imageUrl"></ion-img>
             </ion-thumbnail>
