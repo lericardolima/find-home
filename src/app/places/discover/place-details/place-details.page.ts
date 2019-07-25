@@ -32,8 +32,17 @@ export class PlaceDetailsPage implements OnInit {
 
   onBookClick(): void {
     this.modalController.create({
-      component: CreateBookingComponent
-    }).then(modalEl => modalEl.present());
+      component: CreateBookingComponent,
+      componentProps: { selectedPlace: this._place }
+    }).then(modalEl => {
+      modalEl.present();
+      return modalEl.onDidDismiss();
+    }).then(resultData => {
+      console.log(resultData.data, resultData.role);
+      if (resultData.role === 'confirm') {
+        console.log('Booked!');
+      }
+    });
   }
 
 }
