@@ -1,25 +1,29 @@
-import { Component, OnInit, createPlatform } from '@angular/core';
+import { Component, OnInit, createPlatform, OnDestroy } from '@angular/core';
 import { PlacesService } from '../../places.service';
-import { ActivatedRoute } from '@angular/router';
-import { NavController } from '@ionic/angular';
+import { ActivatedRoute, Router } from '@angular/router';
+import { NavController, LoadingController } from '@ionic/angular';
 import { Place } from '../../place.model';
 import { FormGroup, Validators, FormControl } from '@angular/forms';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-edit-offer',
   templateUrl: './edit-offer.page.html',
   styleUrls: ['./edit-offer.page.scss']
 })
-export class EditOfferPage implements OnInit {
+export class EditOfferPage implements OnInit, OnDestroy {
   form: FormGroup;
-  _offer: Place;
-  formComplete: Boolean = false;
+  offer: Place;
+  formComplete: boolean;
+  placeSubscription: Subscription;
 
   constructor(
     private route: ActivatedRoute,
     private navController: NavController,
-    private placesService: PlacesService
-  ) {}
+    private placesService: PlacesService,
+    private router: Router,
+    private loadingController: LoadingController
+  ) { }
 
   ngOnInit() {
     this.route.paramMap.subscribe(map => {
@@ -28,22 +32,24 @@ export class EditOfferPage implements OnInit {
         return;
       }
 
-      this._offer = this.placesService.getPlace(map.get('offerId'));
-      this.createForm();
+      this.placeSubscription = this.placesService.getPlace(map.get('offerId')).subscribe(place => {
+        this.offer = place;
+        this.createForm();
+      });
     });
   }
 
   createForm(): void {
     this.form = new FormGroup({
-      title: new FormControl(this._offer.title, {
+      title: new FormControl(this.offer.title, {
         updateOn: 'blur',
         validators: [Validators.required]
       }),
-      description: new FormControl(this._offer.description, {
+      description: new FormControl(this.offer.description, {
         updateOn: 'blur',
         validators: [Validators.required, Validators.maxLength(100)]
       }),
-      price: new FormControl(this._offer.price, {
+      price: new FormControl(this.offer.price, {
         updateOn: 'blur',
         validators: [Validators.required, Validators.min(1)]
       }),
@@ -61,9 +67,29 @@ export class EditOfferPage implements OnInit {
   }
 
   onEditOffer(): void {
-    console.log(this.form);
     if (!this.form.valid) {
       return;
+    }
+
+    this.loadingController.create({
+      message: 'Saving changes...'
+    }).then(loadingEl => {
+      loadingEl.present();
+      this.placesService.updatePlace(
+        this.offer.id,
+        this.form.value.title,
+        this.form.value.description
+      ).subscribe(() => {
+        this.form.reset();
+        this.loadingController.dismiss();
+        this.router.navigate(['/places/tabs/offers']);
+      });
+    });
+  }
+
+  ngOnDestroy() {
+    if (this.placeSubscription) {
+      this.placeSubscription.unsubscribe();
     }
   }
 }

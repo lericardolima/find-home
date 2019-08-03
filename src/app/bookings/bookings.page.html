@@ -8,7 +8,21 @@
 </ion-header>
 
 <ion-content>
-  <ion-grid>
+  <ion-grid *ngIf="!bookings || !bookings[0]">
+    <ion-row>
+      <ion-col>
+        <ion-text color="medium">
+          There's no bookings already. Discover new places to book now!
+        </ion-text>
+      </ion-col>
+    </ion-row>
+    <ion-row>
+      <ion-col text-center>
+        <ion-button color="primary" routerLink="/places/tabs/discover">Discover</ion-button>
+      </ion-col>
+    </ion-row>
+  </ion-grid>
+  <ion-grid *ngIf="bookings">
     <ion-row>
       <ion-col size-md="6" offset-md="3">
         <ion-list>
