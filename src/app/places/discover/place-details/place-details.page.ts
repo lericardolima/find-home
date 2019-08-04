@@ -1,12 +1,13 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Place } from '../../place.model';
-import { NavController, ModalController, ActionSheetController, LoadingController } from '@ionic/angular';
-import { ActivatedRoute } from '@angular/router';
+import { NavController, ModalController, ActionSheetController, LoadingController, AlertController } from '@ionic/angular';
+import { ActivatedRoute, Router } from '@angular/router';
 import { PlacesService } from '../../places.service';
 import { CreateBookingComponent } from '../../../bookings/create-booking/create-booking.component';
 import { Subscription } from 'rxjs';
 import { BookingsService } from '../../../bookings/bookings.service';
 import { AuthService } from '../../../auth/auth.service';
+import { error } from '@angular/compiler/src/util';
 
 @Component({
   selector: 'app-place-details',
@@ -18,6 +19,7 @@ export class PlaceDetailsPage implements OnInit, OnDestroy {
   placeSubscription: Subscription;
   place: Place;
   isBookable = false;
+  isLoading = false;
 
   constructor(private navController: NavController,
               private route: ActivatedRoute,
@@ -26,7 +28,9 @@ export class PlaceDetailsPage implements OnInit, OnDestroy {
               private actionSheetController: ActionSheetController,
               private bookingService: BookingsService,
               private loadingController: LoadingController,
-              private authService: AuthService) { }
+              private authService: AuthService,
+              private alertController: AlertController,
+              private router: Router) { }
 
   ngOnInit() {
     this.route.paramMap.subscribe(map => {
@@ -35,11 +39,27 @@ export class PlaceDetailsPage implements OnInit, OnDestroy {
         return;
       }
 
+      this.isLoading = true;
       this.placeSubscription = this.placesService.getPlace(map.get('placeId'))
         .subscribe(place => {
           this.place = place;
           this.isBookable = place.userId !== this.authService.getCurrentUserId();
+          this.isLoading = false;
+        }
+      , error => {
+        this.alertController.create({
+          header: 'An error ocurred',
+          message: 'Could not load place.',
+          buttons: [
+            {text: 'Okay', handler: () => {
+              this.router.navigate(['/places/tabs/discover']);
+            }}
+          ]
+        })
+        .then(alertEl => {
+          alertEl.present();
         });
+      });
     });
   }
 

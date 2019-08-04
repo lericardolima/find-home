@@ -1,10 +1,11 @@
 import { Component, OnInit, createPlatform, OnDestroy } from '@angular/core';
 import { PlacesService } from '../../places.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { NavController, LoadingController } from '@ionic/angular';
+import { NavController, LoadingController, AlertController } from '@ionic/angular';
 import { Place } from '../../place.model';
 import { FormGroup, Validators, FormControl } from '@angular/forms';
 import { Subscription } from 'rxjs';
+import { error } from '@angular/compiler/src/util';
 
 @Component({
   selector: 'app-edit-offer',
@@ -22,7 +23,8 @@ export class EditOfferPage implements OnInit, OnDestroy {
     private navController: NavController,
     private placesService: PlacesService,
     private router: Router,
-    private loadingController: LoadingController
+    private loadingController: LoadingController,
+    private alertController: AlertController
   ) { }
 
   ngOnInit() {
@@ -83,6 +85,21 @@ export class EditOfferPage implements OnInit, OnDestroy {
         this.form.reset();
         this.loadingController.dismiss();
         this.router.navigate(['/places/tabs/offers']);
+      },
+      error => {
+        this.alertController.create({
+          header: 'An error ocurred',
+          message: 'Place could not be fetched. Please, try again later.',
+          buttons: [{
+            text: 'Okay', handler: () => {
+              this.router.navigate(['/places/tabs/offers']);
+            }
+          }]
+        })
+          .then(alertEl => {
+            loadingEl.dismiss();
+            alertEl.present();
+          });
       });
     });
   }

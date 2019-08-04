@@ -1,8 +1,22 @@
 import { Injectable } from '@angular/core';
 import { Place } from './place.model';
 import { AuthService } from '../auth/auth.service';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { take, map, tap, delay } from 'rxjs/operators';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { take, map, tap, switchMap } from 'rxjs/operators';
+import { HttpClient } from '@angular/common/http';
+
+const FIREBASE_URL = 'https://ionic-angular-course-fcbef.firebaseio.com/offered-places';
+const FIREBASE_URL_EXT = '.json';
+
+interface PlaceData {
+  title: string;
+  description: string;
+  imageUrl: string;
+  price: number;
+  availableFrom: Date;
+  availableTo: Date;
+  userId: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -42,29 +56,61 @@ export class PlacesService {
     )
   ]);
 
-  constructor(private authService: AuthService) { }
+
+  constructor(private authService: AuthService,
+              private http: HttpClient) { }
 
   getPlaces(): Observable<Place[]> {
-    return this.places.asObservable();
+    return this.fetchPlaces();
+  }
+
+  fetchPlaces() {
+    return this.http.get<{ [key: string]: PlaceData }>(FIREBASE_URL + FIREBASE_URL_EXT)
+      .pipe(map(res => {
+        const places = [];
+        for (const key in res) {
+          if (res.hasOwnProperty(key)) {
+            const resPlace = res[key];
+            places.push(new Place(
+              key,
+              resPlace.title,
+              resPlace.description,
+              resPlace.imageUrl,
+              resPlace.price,
+              resPlace.availableFrom,
+              resPlace.availableTo,
+              resPlace.userId
+            ));
+          }
+        }
+        return places;
+      }),
+        tap(places => {
+          this.places.next(places);
+        }));
   }
 
   getPlace(id: string): Observable<Place> {
-    return this.places.pipe(
-      take(1),
-      map(places => {
-        return {
-          ...places.find(place => {
-            return place.id === id;
-          })
-        };
-      })
-    );
+    return this.http.get<Place>(`${FIREBASE_URL}/${id}${FIREBASE_URL_EXT}`)
+      .pipe(
+        map(placeData => {
+          return new Place(
+            id,
+            placeData.title,
+            placeData.description,
+            placeData.imageUrl,
+            placeData.price,
+            new Date(placeData.availableFrom),
+            new Date(placeData.availableTo),
+            placeData.userId);
+        })
+      );
   }
 
   addPlace(title: string, description: string, price: number, dateFrom: Date, dateTo: Date): Observable<Place[]> {
-    const id = Math.random().toString();
+    let generatedId: string;
     const newPlace: Place = new Place(
-      id,
+      null,
       title,
       description,
       'https://lonelyplanetimages.imgix.net/mastheads/GettyImages-538096543_medium.jpg?sharp=10&vib=20&w=1200',
@@ -74,27 +120,52 @@ export class PlacesService {
       this.authService.getCurrentUserId()
     );
 
-    return this.places.pipe(take(1), delay(1000), tap(places => {
-      this.places.next(places.concat(newPlace));
-    }));
+    return this.http.post<{ name: string }>(
+      FIREBASE_URL + FIREBASE_URL_EXT, { ...newPlace, id: null }
+    ).pipe(
+      switchMap(res => {
+        generatedId = res.name;
+        return this.places;
+      }),
+      take(1),
+      tap(places => {
+        newPlace.id = generatedId;
+        this.places.next(places.concat(newPlace));
+      }));
   }
 
-  updatePlace(placeId: string, title: string, description: string) {
-    return this.places.pipe(take(1), delay(1000), tap(places => {
-      const updatedPlaceIndex = places.findIndex(pl => pl.id === placeId);
-      const updatedPlaces = [...places];
-      const oldPlace = updatedPlaces[updatedPlaceIndex];
-      updatedPlaces[updatedPlaceIndex] = new Place(
-        oldPlace.id,
-        title,
-        description,
-        oldPlace.imageUrl,
-        oldPlace.price,
-        oldPlace.availableFrom,
-        oldPlace.availableTo,
-        oldPlace.userId);
+  updatePlace(placeId: string, title: string, description: string): Observable<Place> {
+    let updatedPlaces: Place[];
+    return this.places.pipe(
+      take(1),
+      switchMap(places => {
+        if (!places || places.length <= 0) {
+          return this.fetchPlaces();
+        } else {
+          return of(places);
+        }
+      }),
+      switchMap(places => {
+        const updatedPlaceIndex = places.findIndex(pl => pl.id === placeId);
+        updatedPlaces = [...places];
+        const oldPlace = updatedPlaces[updatedPlaceIndex];
+        updatedPlaces[updatedPlaceIndex] = new Place(
+          oldPlace.id,
+          title,
+          description,
+          oldPlace.imageUrl,
+          oldPlace.price,
+          oldPlace.availableFrom,
+          oldPlace.availableTo,
+          oldPlace.userId);
 
-      this.places.next(updatedPlaces);
-    }));
+        return this.http.put<Place>(
+          `${FIREBASE_URL}/${placeId}${FIREBASE_URL_EXT}`, { ...updatedPlaces[updatedPlaceIndex], id: null }
+        );
+      }),
+      tap(() => {
+        this.places.next(updatedPlaces);
+      })
+    );
   }
 }

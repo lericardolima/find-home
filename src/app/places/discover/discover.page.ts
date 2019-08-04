@@ -15,12 +15,25 @@ export class DiscoverPage implements OnInit, OnDestroy {
   placesSubscription: Subscription;
   places: Place[];
   relevantPlaces: Place[];
+  isLoading = false;
   constructor(private placesService: PlacesService,
               private authService: AuthService) { }
 
   ngOnInit() {
     this.placesSubscription = this.placesService.getPlaces()
-      .subscribe(places => this.places = places);
+      .subscribe(places => {
+        this.places = places;
+        this.relevantPlaces = this.places;
+      });
+  }
+
+  ionViewWillEnter() {
+    this.isLoading = true;
+    this.placesService.fetchPlaces().subscribe(
+      () => {
+        this.isLoading = false;
+      }
+    );
   }
 
   ngOnDestroy() {
