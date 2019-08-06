@@ -4,6 +4,7 @@ import { AuthService } from '../auth/auth.service';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { take, map, tap, switchMap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
+import { PlaceLocation } from './place-location.model';
 
 const FIREBASE_URL = 'https://ionic-angular-course-fcbef.firebaseio.com/offered-places';
 const FIREBASE_URL_EXT = '.json';
@@ -16,6 +17,7 @@ interface PlaceData {
   availableFrom: Date;
   availableTo: Date;
   userId: string;
+  location: PlaceLocation;
 }
 
 @Injectable({
@@ -32,7 +34,8 @@ export class PlacesService {
       149.99,
       new Date('2019-01-01'),
       new Date('2021-01-01'),
-      'abc'
+      'abc',
+      null
     ),
     new Place(
       'p2',
@@ -42,7 +45,8 @@ export class PlacesService {
       189.99,
       new Date('2019-01-01'),
       new Date('2021-01-01'),
-      'abc'
+      'abc',
+      null
     ),
     new Place(
       'p3',
@@ -52,7 +56,8 @@ export class PlacesService {
       99.99,
       new Date('2019-01-01'),
       new Date('2021-01-01'),
-      'xyz'
+      'xyz',
+      null
     )
   ]);
 
@@ -79,7 +84,8 @@ export class PlacesService {
               resPlace.price,
               resPlace.availableFrom,
               resPlace.availableTo,
-              resPlace.userId
+              resPlace.userId,
+              resPlace.location
             ));
           }
         }
@@ -102,12 +108,13 @@ export class PlacesService {
             placeData.price,
             new Date(placeData.availableFrom),
             new Date(placeData.availableTo),
-            placeData.userId);
+            placeData.userId,
+            placeData.location);
         })
       );
   }
 
-  addPlace(title: string, description: string, price: number, dateFrom: Date, dateTo: Date): Observable<Place[]> {
+  addPlace(title: string, description: string, price: number, dateFrom: Date, dateTo: Date, location: PlaceLocation): Observable<Place[]> {
     let generatedId: string;
     const newPlace: Place = new Place(
       null,
@@ -117,7 +124,8 @@ export class PlacesService {
       price,
       dateFrom,
       dateTo,
-      this.authService.getCurrentUserId()
+      this.authService.getCurrentUserId(),
+      location
     );
 
     return this.http.post<{ name: string }>(
@@ -157,7 +165,8 @@ export class PlacesService {
           oldPlace.price,
           oldPlace.availableFrom,
           oldPlace.availableTo,
-          oldPlace.userId);
+          oldPlace.userId,
+        oldPlace.location);
 
         return this.http.put<Place>(
           `${FIREBASE_URL}/${placeId}${FIREBASE_URL_EXT}`, { ...updatedPlaces[updatedPlaceIndex], id: null }
