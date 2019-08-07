@@ -1,7 +1,8 @@
 {
   "name": "find-home",
   "integrations": {
-    "cordova": {}
+    "cordova": {},
+    "capacitor": {}
   },
   "type": "angular"
 }
